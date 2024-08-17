@@ -21,25 +21,24 @@ from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.preprocessing import LabelEncoder
 from prophet import Prophet
 import numpy as np
 import pickle
+import time
 from io import BytesIO
 import utils
 
 
 #-----------Web page setting-------------------#
-page_title = "AMR Web App"
+page_title = "ResistAI"
 page_icon = "🦠🧬"
-viz_icon = "📊"
-stock_icon = "📋"
 picker_icon = "👇"
 #layout = "centered"
 
 #--------------------Page configuration------------------#
-st.set_page_config(page_title = page_title, page_icon = page_icon)
+st.set_page_config(page_title = page_title, page_icon = 'C:/Users/Gerald BRUNO/Documents/BioMed Project/health.png')
 
 #--------------------Web App Design----------------------#
 
@@ -54,10 +53,10 @@ selected = option_menu(
 @st.cache_data
 #Antimicrobial Resistance in Europe Data
 def load_euro_data():
-    #euro_link_id = "1aNulNFQQzvoDh75hbtZJ7_QcW4fRl9rs"
-    #euro_link = f'https://drive.google.com/uc?id={euro_link_id}'
-    #euro_df = pd.read_csv(euro_link)
-    euro_df = pd.read_csv("ecdc.csv")
+    euro_link_id = "1aNulNFQQzvoDh75hbtZJ7_QcW4fRl9rs"
+    euro_link = f'https://drive.google.com/uc?id={euro_link_id}'
+    euro_df = pd.read_csv(euro_link)
+    #euro_df = pd.read_csv("ecdc.csv")
     euro_df['Distribution'] = euro_df['Distribution'].str.split(',').str[1].str.split(' ').str[-1]
     euro_df = euro_df.drop(columns = ['Unit', 'RegionCode', 'Unnamed: 0'], axis = 1)
     return euro_df
@@ -67,10 +66,10 @@ euro_df = load_euro_data()
 @st.cache_data
 # Omadacycline Gram-Negative Data
 def load_oma_ngram():
-    #negative_link_id = "1jHO-NFMsauUGVx9pfW5RPMvNGc6G0wAT"
-    #negative_link = f'https://drive.google.com/uc?id={negative_link_id}'
-    #gram_neg = pd.read_csv(negative_link)
-    gram_neg = pd.read_csv("omad_gram_neg_cleaned.csv")
+    negative_link_id = "1jHO-NFMsauUGVx9pfW5RPMvNGc6G0wAT"
+    negative_link = f'https://drive.google.com/uc?id={negative_link_id}'
+    gram_neg = pd.read_csv(negative_link)
+    #gram_neg = pd.read_csv("omad_gram_neg_cleaned.csv")
     gram_neg = gram_neg.rename(columns={'Piperacillin-\ntazobactam': 'Piperacillin-tazobactam'})
     gram_neg = gram_neg.rename(columns={'Piperacillin-\ntazobactam_MIC': 'Piperacillin-tazobactam_MIC'})
     gram_neg = gram_neg[gram_neg['Age'] < 200]
@@ -83,10 +82,10 @@ gram_neg = load_oma_ngram()
 @st.cache_data
 # Omadacycline Gram-Negative Data
 def load_oma_pgram():
-    #positive_link_id = "1NHR41hfyCN26EmQ7SrLCrhSBJnAVDQo0"
-    #positive_link = f'https://drive.google.com/uc?id={positive_link_id}'
-    #gram_pos = pd.read_csv(positive_link)
-    gram_pos = pd.read_csv("omad_gram_pos_cleaned.csv")
+    positive_link_id = "1NHR41hfyCN26EmQ7SrLCrhSBJnAVDQo0"
+    positive_link = f'https://drive.google.com/uc?id={positive_link_id}'
+    gram_pos = pd.read_csv(positive_link)
+    #gram_pos = pd.read_csv("omad_gram_pos_cleaned.csv")
     gram_pos = gram_pos[gram_pos['Age'] < 200]
     gram_pos['Gender'] = gram_pos['Gender'].replace({'M': 'Male', 'F': 'Female'})
     return gram_pos
@@ -117,71 +116,132 @@ if selected == "Home":
 
 
 if selected == "Analysis":
-    datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bactirial Surveilance Data", 
-                "Gram-Positive Bactirial Surveilance Data"]
-    st.subheader("Select oreferred dataset")
+
+    # Analys page Instructions Sidebar
+    with st.sidebar:
+        st.header("Welcome to the Analysis Page!")
+        st.subheader("Instructions")
+        
+        with st.expander("**Step 1: Select Your Dataset**"):
+            st.write("""
+            - Use the first dropdown menu to choose the dataset you want to analyze.
+            - Options include:
+                - **Antimicrobial Resistance in Europe Data**: Contains data on antimicrobial resistance trends in Europe.
+                - **Gram-Negative Bacterial Surveillance Data**: Focuses on surveillance data related to Gram-negative bacteria.
+                - **Gram-Positive Bacterial Surveillance Data**: Covers surveillance data on Gram-positive bacteria.
+            """)
+
+        with st.expander("**Step 2: Choose the Type of Analysis**"):
+            st.write("""
+            - Once you've selected your dataset, use the second dropdown menu to choose the type of analysis:
+                - **Demographic Analysis**: Analyze data based on demographic factors.
+                - **Bacterial Analysis**: Focus on analyzing bacterial strains and related metrics.
+                - **Antibiotic Analysis**: Analyze the effectiveness of different antibiotics and resistance patterns.
+            """)
+
+        with st.expander("**Step 3: Interact with Visualizations**"):
+            st.write("""
+            - After selecting your dataset and analysis type, visualizations will be generated.
+            - Interact with these visualizations by hovering over bars, choropleths, or other elements to see detailed information.
+            - This interaction will provide you with deeper insights into the data.
+            """)
+
+        st.write("Note: Feel free to revisit this guide if you need assistance.")
+        st.info("Happy analyzing!")
+
+    datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bacterial Surveilance Data", 
+                "Gram-Positive Bacterial Surveilance Data"]
+    st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets)
 
 
     if selected_dataset == "Antimicrobial Resistance in Europe Data":
 
-        analysis = ["Descriptive Statistics", "Resistance Trend Analysis", "Comparative Analysis",
-                    "Demographic Analysis", "Bacteria Analysis", "Antibiotics Analysis"]
+        analysis = ["Demographic Analysis", "Bacteria Analysis", "Antibiotics Analysis"]
         st.subheader("Select analysis")
         selected_analysis = st.selectbox("Pick analysis type " + picker_icon, analysis)
 
         if selected_analysis == "Demographic Analysis":
+
             data = euro_df
-            data['Distribution'] = data['Distribution'].str.split(',').str[1].str.split(' ').str[-1]
+            # Age analysis
             age_subset = data[data['Distribution'] == "age"]
-            age_count = age_subset['Category'].value_counts()
+            age_count = age_subset['Category'].value_counts().sort_values(ascending=True)
+            st.write("**Age Group Distribution**")
+            st.bar_chart(age_count)
 
+            # Gender analysis
+            gender_subset = data[data['Distribution'] == "gender"]
+            gender_count = gender_subset['Category'].value_counts().sort_values(ascending=True)
+            st.write("**Gender Distribution**")
+            st.bar_chart(gender_count)
 
-            fig = px.bar(age_subset, x='Category', title='Age Group Distribution',
-                        labels={'Category': 'Age Group', 'count': 'Frequency'})
-            st.plotly_chart(fig)
-            st.info("Add summary analysis here!")
-        
-        if selected_analysis == "Descriptive Statistics":
-            fig = px.histogram(
-                euro_df, 
-                x='Value', 
-                nbins=30, 
-                title='Histogram of Resistance Percentages',
-                labels={'Value': 'Resistance Percentage'}, 
-                color_discrete_sequence=['blue']
-            )
+            # Country analysis
+            country_count = data['RegionName'].value_counts().sort_values(ascending=False).head(10)
+            st.write("**Top 10 Countries of the Study**")
+            st.bar_chart(country_count)
 
-            fig.update_layout(
-                xaxis_title='Resistance Percentage',
-                yaxis_title='Frequency',
-                bargap=0.1,
-                height=600
-            )
-
-            st.plotly_chart(fig)
-
-            st.info("We can add some summary analysis here.")
-
-            st.subheader("Bar Chart for Categorical Variables")
-            st.write("Bar Chart of Bacteria Types")
-            bacteria_count = euro_df['Bacteria'].value_counts()
-            st.bar_chart(bacteria_count)
-            st.info("Add summary analysis here!")
-
-            st.write("Bar Chart of Antibiotic Types")
-            antibiotic_count = euro_df['Antibiotic'].value_counts()
-            st.bar_chart(antibiotic_count)
-            st.info("Add summary analysis here!")
-
-            st.subheader("Pie Chart of Distribution by Category")
+            # Distribution of study
             st.write("Pie Chart of Distribution by Category")
             gender_distribution = euro_df['Category'].value_counts()
             fig = px.pie(names=gender_distribution.index, values=gender_distribution.values)
             st.plotly_chart(fig)
-            st.info("Add summary analysis here!")
         
-        if selected_analysis == "Resistance Trend Analysis":
+
+        # Bacteria Analysis
+        if selected_analysis == "Bacteria Analysis":
+
+            st.write("**Bacteria Types Distribution**")
+            bacteria_count = euro_df['Bacteria'].value_counts()
+            st.bar_chart(bacteria_count)
+
+        
+        # Antibiotic Analysis
+        if selected_analysis == "Antibiotics Analysis":
+            st.write("**Antibiotic Distribution**")
+            anti_count = euro_df['Antibiotic'].value_counts()
+            st.bar_chart(anti_count)
+
+            fig1 = px.box(
+                euro_df,
+                x='Antibiotic',
+                y='Value',
+                title='Antibiotic Efficacy Comparison',
+                labels={'Antibiotic': 'Antibiotic', 'Value': 'Resistance Percentage'},
+                category_orders={'Antibiotic': sorted(euro_df['Antibiotic'].unique())}
+            )
+
+            fig1.update_layout(
+                #title={'text': 'Resistance Trends Over Time', 'x': 0.5},
+                xaxis_title='Year',
+                yaxis_title='Resistance Percentage',
+                height=800,  
+                width=800   
+            )
+
+            st.plotly_chart(fig1)
+
+            st.subheader("Bacteria-Antibiotic Interaction")
+            st.write("Bacteria-Antibiotic Interaction Heatmap")
+            interaction_data = euro_df.pivot_table(index='Bacteria', columns='Antibiotic', values='Value', aggfunc='mean')
+
+            fig2 = px.imshow(
+                interaction_data,
+                color_continuous_scale=px.colors.sequential.Plasma_r,
+                title='Bacteria-Antibiotic Interaction Heatmap',
+                labels={'color': 'Resistance Percentage'},
+                aspect='auto'
+            )
+
+            fig2.update_layout(
+                title={'text': 'Bacteria-Antibiotic Interaction Heatmap', 'x': 0.5},
+                xaxis_title='Antibiotic',
+                yaxis_title='Bacteria',
+                height=1200,  
+                width=800   
+            )
+            st.plotly_chart(fig2)
+
             st.subheader("Time Series Analysis")
             aggregated_data = euro_df.groupby('Time').agg({'Value': 'mean'}).reset_index()
             fig1 = px.line(
@@ -210,54 +270,11 @@ if selected == "Analysis":
 
             st.plotly_chart(fig2)
         
-            st.info("Add summary analysis here!")
 
-        if selected_analysis == "Comparative Analysis":
-            st.subheader("Antibiotic Efficacy Comparison")
-            fig1 = px.box(
-                euro_df,
-                x='Antibiotic',
-                y='Value',
-                title='Antibiotic Efficacy Comparison',
-                labels={'Antibiotic': 'Antibiotic', 'Value': 'Resistance Percentage'},
-                category_orders={'Antibiotic': sorted(euro_df['Antibiotic'].unique())}
-            )
-
-            fig1.update_layout(
-                title={'text': 'Resistance Trends Over Time', 'x': 0.5},
-                xaxis_title='Year',
-                yaxis_title='Resistance Percentage',
-                height=800,  
-                width=800   
-            )
-
-            st.plotly_chart(fig1)
-            st.info("Add summary analysis here!")
-
-            st.subheader("Bacteria-Antibiotic Interaction")
-            st.write("Bacteria-Antibiotic Interaction Heatmap")
-            interaction_data = euro_df.pivot_table(index='Bacteria', columns='Antibiotic', values='Value', aggfunc='mean')
-
-            fig2 = px.imshow(
-                interaction_data,
-                color_continuous_scale=px.colors.sequential.Plasma_r,
-                title='Bacteria-Antibiotic Interaction Heatmap',
-                labels={'color': 'Resistance Percentage'},
-                aspect='auto'
-            )
-
-            fig2.update_layout(
-                title={'text': 'Bacteria-Antibiotic Interaction Heatmap', 'x': 0.5},
-                xaxis_title='Antibiotic',
-                yaxis_title='Bacteria',
-                height=1200,  
-                width=800   
-            )
-            st.plotly_chart(fig2)
-            st.info("Add summary analysis here!")
+ 
     
     # Gram-Negative Data Analysis
-    if selected_dataset == "Gram-Negative Bactirial Surveilance Data":
+    if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
 
         analysis = ["Demographic Analysis", "Bacteria (Orgamism) Analysis", "Antibiotics Analysis"]
 
@@ -280,6 +297,9 @@ if selected == "Analysis":
 
         # Bactirial Analysis
         if selected_analysis == "Bacteria (Orgamism) Analysis":
+            # Top 10 Organisms
+            utils.top_10_organisms(gram_neg)
+
             # Distribution of Organisms per Country
             utils.org_by_country(gram_neg)
 
@@ -322,7 +342,7 @@ if selected == "Analysis":
             utils.anti_per_continent(gram_neg, anti_continent)
 
     # Gram-Positive Data Analysis
-    if selected_dataset == "Gram-Positive Bactirial Surveilance Data":
+    if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
 
         analysis = ["Demographic Analysis", "Bacteria (Orgamism) Analysis", "Antibiotics Analysis"]
 
@@ -345,6 +365,9 @@ if selected == "Analysis":
 
         # Bactirial Analysis
         if selected_analysis == "Bacteria (Orgamism) Analysis":
+            # Top 10 Organisms
+            utils.top_10_organisms(gram_pos)
+
             # Distribution of Organisms per Country
             utils.org_by_country(gram_pos)
 
@@ -389,19 +412,103 @@ if selected == "Analysis":
 
 # Train Model Page
 if selected == "Train Model":
-    datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bactirial Surveilance Data", 
-                "Gram-Positive Bactirial Surveilance Data"]
-    st.subheader("Select oreferred dataset")
+
+    # Train Model page Instructions Sidebar
+    with st.sidebar:
+        st.header("Welcome to the Train Model Page!")
+        st.subheader("Instructions")
+        
+        with st.expander("**Step 1: Select Dataset for Training**"):
+            st.write("""
+            - **What to Do:**
+            - Use the first select box to choose the dataset you'd like to work with. The available datasets include:
+            - **Antimicrobial Resistance in Europe Data**
+            - **Gram-Negative Bacterial Surveillance Data**
+            - **Gram-Positive Bacterial Surveillance Data**
+                     
+            - **What to Expect:** The selected dataset will be loaded and prepared for analysis.
+            """)
+
+        with st.expander("**Step 2: Choose a Machine Learning Algorithm**"):
+            st.write("""
+            - **What to Do:** 
+            - Use the second select box to select a machine learning algorithm from the list of 10 available options. 
+                     
+            - **What to Expect:** This algorithm will be used to train a model on the selected dataset.
+
+            """)
+
+        with st.expander("**Step 3: Choose an Antibiotic**"):
+            st.write("""
+            - **What to Do:** 
+            - Use the third select box to select a particular antibiotic from the list of available antibiotics you wish to train the model for. 
+                     
+            - **What to Expect:** This antibiotic will be the target variable that will be used in the training of the model.
+
+            """)
+
+        with st.expander("**Step 4: Train Your Model**"):
+            st.write("""
+            - **What to Do:** 
+            - Click the `Train your model` button to train the algorithm you have selected on the dataset chosen. 
+                     
+            - **What to Expect:** The training of the model would be done. This might take a few seconds to some minutes, depending on the algorithm selected.
+
+            """)
+
+        with st.expander("**Step 5: View and Interpret the Outputs**"):
+            st.write("""
+            - **Outputs:**
+            - **Feature Importance (if applicable):**
+                - **What to Do:** 
+                - Check the interactive bar chart that displays the most important features used by the model. 
+                - Hover over the bars to see details about each feature's importance.
+                - **What to Expect:** This output will help you understand which features are most influential in the model's predictions.
+            - **Metric Results:**
+                - **What to Do:** 
+                - Review the following key performance metrics:
+                    - **Accuracy Score:** Indicates the overall accuracy of the model.
+                    - **Precision:** Measures the accuracy of positive predictions.
+                    - **Recall:** Indicates how well the model identifies positive cases.
+                    - **F1-Score:** The harmonic mean of precision and recall, balancing both metrics.
+                - **What to Expect:** These metrics will help you evaluate the model's performance and suitability for your analysis.
+            - **Confusion Matrix:**
+                - **What to Do:** 
+                - Analyze the interactive confusion matrix plot to compare predicted labels versus actual labels.
+                - Hover over each cell to see the count of predictions.
+                - **What to Expect:** This will give you insight into where the model is making correct or incorrect predictions.
+            """)
+
+        with st.expander("**Step 6: Download the Trained Model**"):
+            st.write("""
+            - **What to Do:**
+                - If satisfied with the model’s performance, click the `Download Model` button to download the trained model as a pickle file.
+            - **What to Expect:** This will allow you to save the model for future use or further analysis.
+            """)
+
+        st.write("Note: Feel free to revisit this guide if you need assistance.")
+        st.info("Happy training!")
+
+    datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bacterial Surveilance Data", 
+                "Gram-Positive Bacterial Surveilance Data"]
+    st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets)
 
 
     if selected_dataset == "Antimicrobial Resistance in Europe Data":
         # Dummy feature encoding
         data_encoded = euro_df
-        data_encoded = pd.get_dummies(euro_df, columns=['Distribution', 'RegionName', 'Bacteria', 'Antibiotic', 'Category'])
+        #data_encoded = pd.get_dummies(euro_df, columns=['Distribution', 'RegionName', 'Bacteria', 'Antibiotic', 'Category'])
         # Feature and target
         X = data_encoded.drop('Value', axis=1)
         y = (euro_df['Value'] > 50).astype(int)  # Binary classification: 0 for non-resistant, 1 for resistant
+
+        # Apply label encoding to non-numerical columns in X
+        le = LabelEncoder()
+        non_numerical_cols = X.select_dtypes(include=['object', 'category']).columns
+
+        for col in non_numerical_cols:
+            X[col] = le.fit_transform(X[col])
 
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
@@ -433,55 +540,74 @@ if selected == "Train Model":
             elif model_selected == "LightGBM Classifier":
                 model = LGBMClassifier()
             
-            # Train the model
-            model.fit(X_train, y_train)
-
-            # Feature importance (if applicable)
-            if hasattr(model, 'feature_importances_'):
-                importances = model.feature_importances_
-                indices = np.argsort(importances)[::-1]
-
-                # Prepare data for Plotly Express
-                importance_df = pd.DataFrame({
-                    'Feature': [X_train.columns[i] for i in indices],
-                    'Importance': importances[indices]
-                })
-
-                # Clean up feature names
-                def clean_feature_name(name):
-                    parts = name.split('_')
-                    return parts[-1] if len(parts) > 1 else name
+            train_btn = st.button("Train your model")
+            st.info("**Note**: Some algorithms might take long to train. Just give it some minutes!")
+            
+            # Get training 
+            if train_btn:
+                # Initialize the progress bar
+                loading_text = st.text("Your model is training...")
+                progress = st.progress(0)
                 
-                importance_df['Cleaned_Feature'] = importance_df['Feature'].apply(clean_feature_name)
 
-                st.subheader("Feature Importance Analysis")
-                # Plot using Plotly Express
-                fig = px.bar(importance_df.head(10), x='Cleaned_Feature', y='Importance', title='Top 10 Most Important Features',
-                            labels={'Cleaned_Feature': 'Feature Name', 'Importance': 'Importance Value'})
-                fig.update_xaxes(tickangle=-90)
-                st.plotly_chart(fig)
+                # Artificially increment progress
+                for i in range(0, 101, 10):
+                    time.sleep(0.1) 
+                    progress.progress(i)
+        
+                # Train the model
+                model.fit(X_train, y_train)
 
-            # Predictions
-            st.subheader("Prediction Score")
-            y_pred = model.predict(X_test)
-            accuracy = accuracy_score(y_test, y_pred)
-            accuracy_percentage = accuracy * 100
+                # Remove the progress bar after completion
+                progress.empty()
+                loading_text.empty()
 
-            st.markdown(f"Accuracy Score: **{accuracy_percentage:.2f}%**")
+                # Feature importance (if applicable)
+                if hasattr(model, 'feature_importances_'):
+                    importances = model.feature_importances_
+                    indices = np.argsort(importances)[::-1]
 
-            # Confusion Matrix Analysis
-            st.subheader("Confusion Matrix Analysis")
-            cm = confusion_matrix(y_test, y_pred)
+                    # Prepare data for Plotly Express
+                    importance_df = pd.DataFrame({
+                        'Feature': [X_train.columns[i] for i in indices],
+                        'Importance': importances[indices]
+                    })
 
-            # Convert confusion matrix to DataFrame for Plotly
-            cm_df = pd.DataFrame(cm, index=['Resistant', 'Suceptible'], columns=['Resistant', 'Suceptible'])
 
-            # Plot confusion matrix using Plotly Express
-            fig1 = px.imshow(cm_df, text_auto=True, color_continuous_scale=px.colors.sequential.Plasma_r,
-                            labels={'x': 'Predicted Label', 'y': 'Actual Label', 'color': 'Count'},
-                            title='Confusion Matrix')
-            fig1.update_xaxes(side="bottom") 
-            st.plotly_chart(fig1)
+                    st.subheader("Feature Importance Analysis")
+                    # Plot using Plotly Express
+                    fig = px.bar(importance_df, x='Feature', y='Importance', title='Most Important Features',
+                                labels={'Feature': 'Feature Name', 'Importance': 'Importance Value'})
+                    fig.update_xaxes(tickangle=-90)
+                    st.plotly_chart(fig)
+
+                # Predictions
+                st.subheader("Prediction Score")
+                y_pred = model.predict(X_test)
+                accuracy = accuracy_score(y_test, y_pred) * 100
+                precision = precision_score(y_test, y_pred, average='weighted') * 100
+                recall = recall_score(y_test, y_pred, average='weighted') * 100
+                f1 = f1_score(y_test, y_pred, average='weighted') * 100
+
+                # Print metrics as percentages
+                st.write(f"Accuracy: **{accuracy:.2f}%**")
+                st.write(f"Precision: **{precision:.2f}%**")
+                st.write(f"Recall: **{recall:.2f}%**")
+                st.write(f"F1-score: **{f1:.2f}%**")
+
+                # Confusion Matrix Analysis
+                st.subheader("Confusion Matrix Analysis")
+                cm = confusion_matrix(y_test, y_pred)
+
+                # Convert confusion matrix to DataFrame for Plotly
+                cm_df = pd.DataFrame(cm, index=['Resistant', 'Suceptible'], columns=['Resistant', 'Suceptible'])
+
+                # Plot confusion matrix using Plotly Express
+                fig1 = px.imshow(cm_df, text_auto=True, color_continuous_scale=px.colors.sequential.Plasma_r,
+                                labels={'x': 'Predicted Label', 'y': 'Actual Label', 'color': 'Count'},
+                                title='Confusion Matrix')
+                fig1.update_xaxes(side="bottom") 
+                st.plotly_chart(fig1)
 
             # Provide download button to download the trained model
             st.subheader("Download Trained Model")
@@ -500,7 +626,7 @@ if selected == "Train Model":
         model_training_and_analysis(model_selected, X_train, y_train, X_test, y_test)
     
     # Gram-Negative Data Training
-    if selected_dataset == "Gram-Negative Bactirial Surveilance Data":        
+    if selected_dataset == "Gram-Negative Bacterial Surveilance Data":        
         st.subheader("Select Algorithm")
         model_selected = st.selectbox("Pick an alogorithm to train on " + picker_icon, model_list)
         
@@ -510,7 +636,7 @@ if selected == "Train Model":
         utils.model_training(model_selected, gram_neg, anti)
 
     # Gram-Positive Data Training
-    if selected_dataset == "Gram-Positive Bactirial Surveilance Data":        
+    if selected_dataset == "Gram-Positive Bacterial Surveilance Data":        
         st.subheader("Select Algorithm")
         model_selected = st.selectbox("Pick an alogorithm to train on " + picker_icon, model_list)
         
@@ -521,19 +647,76 @@ if selected == "Train Model":
 
 
 if selected == "Make a Forecast":
+    # Forecast page Instructions Sidebar
+    with st.sidebar:
+        st.header("Welcome to the Make a Forecast Page!")
+        st.subheader("Instructions")
+        
+        with st.expander("**Step 1: Select Dataset for Analysis**"):
+            st.write("""
+            - **What to Do:** 
+            - Use the first select box to choose the dataset you'd like to analyze. The available datasets include:
+                - **Antimicrobial Resistance in Europe Data**
+                - **Gram-Negative Bacterial Surveillance Data**
+                - **Gram-Positive Bacterial Surveillance Data**
+            - **What to Expect:** The selected dataset will be loaded and prepared for forecasting.
 
-    datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bactirial Surveilance Data", 
-                "Gram-Positive Bactirial Surveilance Data"]
-    st.subheader("Select oreferred dataset")
+            """)
+
+        with st.expander("**Step 2: Choose a Bacteria (Organism)**"):
+            st.write("""
+            - **What to Do:** 
+                - Use the second select box to select a bacteria (organism) from the list of available options in the selected dataset.
+            - **What to Expect:** This selection will allow you to focus the analysis on a specific bacteria.
+            """)
+
+        with st.expander("**Step 3: Choose an Antibiotic**"):
+            st.write("""
+            - **What to Do:** 
+                - Use the third select box to select an antibiotic from the list of available options in the selected dataset.
+            - **What to Expect:** This selection will set the context for forecasting resistance trends.
+
+            """)
+
+        with st.expander("**Step 4: Set the Forecast Period**"):
+            st.write("""
+            - **What to Do:** 
+                - Use the slider to choose the number of years for the forecast, ranging from 1 to 10 years.
+            - **What to Expect:** The forecast will be generated for the selected time period, providing a trend analysis of resistance.
+            """)
+
+        with st.expander("**Step 5: Make Your Forecast**"):
+            st.write("""
+            - **What to Do:** 
+                - Click the `Make Your Forecast` button to forecast the resistance trend of your selected bacteria (organism) to the selected antibiotic over the given period of time. 
+                     
+            - **What to Expect:** A forecast would be made based on your selections. When done, a time series plot would be displayed. This might take a few seconds to some minutes so just give it a little time.
+            """)
+
+        with st.expander("**Step 6: Interpret the Time Series Trend Analysis**"):
+            st.write("""
+            - **Output:**
+                - A time series chart will display the resistance values over the selected forecast period.
+            - **What to Expect:** Based on the trend:
+                - **Rising Trend:** Indicates increasing resistance of the selected bacteria to the chosen antibiotic over time.
+                - **Falling Trend:** Indicates decreasing resistance (higher susceptibility) of the bacteria to the antibiotic over time.
+                - **Plateauing Trend:** Indicates that the resistance of the bacteria to the antibiotic is stable and not changing significantly over time.
+            """)
+
+        st.write("Note: Feel free to revisit this guide if you need assistance.")
+        st.info("Happy forecasting!")
+
+
+    datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bacterial Surveilance Data", 
+                "Gram-Positive Bacterial Surveilance Data"]
+    st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets)
 
     # Forecast using Antimicrobial Resistance in Europe Data
     if selected_dataset == "Antimicrobial Resistance in Europe Data":
 
         data = euro_df
-        data = data.drop(['Unnamed: 0', 'Unit', 'RegionCode'], axis=1)
-        data['Distribution'] = data['Distribution'].str.split(',').str[1].str.split(' ').str[-1]
-        st.subheader("Select Bacteria and a corresponding Antibiotic")
+        st.subheader("Select Bacteria (Organism) and a corresponding Antibiotic")
         bacteria_selected = st.selectbox("Pick a bacteria " + picker_icon, data['Bacteria'].unique())
         anti_selected = st.selectbox("Pick a antibiotic " + picker_icon, data['Antibiotic'].unique())
 
@@ -555,49 +738,65 @@ if selected == "Make a Forecast":
             filtered_data['Category_encoded'] = pd.factorize(filtered_data['Category'])[0]
             filtered_data['Distribution_encoded'] = pd.factorize(filtered_data['Distribution'])[0]
 
-            # Initialize the Prophet model
-            model = Prophet()
-
-            # Add regressors
-            model.add_regressor('RegionName_encoded')
-            model.add_regressor('Category_encoded')
-            model.add_regressor('Distribution_encoded')
-
-            # Fit the model
-            model.fit(filtered_data[['ds', 'y', 'RegionName_encoded', 'Category_encoded', 'Distribution_encoded']])
-
-            # Make future dataframe 
-            future = model.make_future_dataframe(periods=period, freq='YE')
-
+            forecast_btn = st.button("Make Your Forecast")
             
-            future['RegionName_encoded'] = filtered_data['RegionName_encoded'].iloc[-1]
-            future['Category_encoded'] = filtered_data['Category_encoded'].iloc[-1]
-            future['Distribution_encoded'] = filtered_data['Distribution_encoded'].iloc[-1]
+            # Get training 
+            if forecast_btn:
+                # Initialize the progress bar
+                loading_text = st.text("Your forecast results would display soon...")
+                progress = st.progress(0)
+                
+
+                # Artificially increment progress
+                for i in range(0, 101, 10):
+                    time.sleep(0.1) 
+                    progress.progress(i)
+
+                # Initialize the Prophet model
+                model = Prophet()
+
+                # Add regressors
+                model.add_regressor('RegionName_encoded')
+                model.add_regressor('Category_encoded')
+                model.add_regressor('Distribution_encoded')
+
+                # Fit the model
+                model.fit(filtered_data[['ds', 'y', 'RegionName_encoded', 'Category_encoded', 'Distribution_encoded']])
+
+                # Make future dataframe 
+                future = model.make_future_dataframe(periods=period, freq='YE')
+
+                
+                future['RegionName_encoded'] = filtered_data['RegionName_encoded'].iloc[-1]
+                future['Category_encoded'] = filtered_data['Category_encoded'].iloc[-1]
+                future['Distribution_encoded'] = filtered_data['Distribution_encoded'].iloc[-1]
 
 
-            # Predict future values
-            forecast = model.predict(future)
+                # Predict future values
+                forecast = model.predict(future)
 
-            # Plot the results
-            fig = plt.figure(figsize=(10, 6)) 
-            ax = fig.add_subplot(111)
-            fig = model.plot(forecast, ax=ax)
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Resistance Value")
-            ax.set_title(f"Forecast Resistance of {bacteria_selected} to {anti_selected}")
+                # Plot the results
+                fig = plt.figure(figsize=(10, 6)) 
+                ax = fig.add_subplot(111)
+                fig = model.plot(forecast, ax=ax)
+                ax.set_xlabel("Year")
+                ax.set_ylabel("Resistance Value")
+                ax.set_title(f"Forecast Resistance of {bacteria_selected} to {anti_selected}")
 
+                st.pyplot(fig)
 
-            st.pyplot(fig)
+                # Remove the progress bar after completion
+                progress.empty()
+                loading_text.empty()
+
 
     # Forecast using Gram-Negative Bactirial Surveilance Data
-    if selected_dataset == "Gram-Negative Bactirial Surveilance Data":
+    if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
         
-        st.subheader("Select Antibiotic to forecast its resistance for")
-        anti = st.selectbox("Pick an Antibiotic " + picker_icon, ngram_antibiotic_list)
-
+        st.subheader("Select Bacteria (Organism) and a corresponding Antibiotic")
         bacteria_list = gram_neg['Organism'].unique()
-        st.subheader("Select corresponding bacteria (organism)")
         bacteria = st.selectbox("Pick an Bacteria (Organism) " + picker_icon, bacteria_list)
+        anti = st.selectbox("Pick an Antibiotic " + picker_icon, ngram_antibiotic_list)
 
         forecast_period = st.slider("Pick number of years for forecast:", 1, 10, 1)
         
@@ -605,7 +804,7 @@ if selected == "Make a Forecast":
         utils.forecast_data(gram_neg, anti, bacteria, forecast_period)
 
     # Forecast using Gram-Positive Bactirial Surveilance Data
-    if selected_dataset == "Gram-Positive Bactirial Surveilance Data":
+    if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
         
         st.subheader("Select Antibiotic to forecast its resistance for")
         anti = st.selectbox("Pick an Antibiotic " + picker_icon, pgram_antibiotic_list)
@@ -620,29 +819,127 @@ if selected == "Make a Forecast":
 
 
 if selected == "Make Prediction":
+
+    # Prediction page Instructions Sidebar
+    with st.sidebar:
+        st.header("Welcome to the **Make Prediction** Page!")
+        st.subheader("Instructions")
+        
+        with st.expander("**Step 1: Select Dataset for Analysis**"):
+            st.write("""
+            - **What to Do:** 
+            - Use the first select box to choose the dataset you'd like to analyze. The available datasets include:
+                - **Gram-Negative Bacterial Surveillance Data**
+                - **Gram-Positive Bacterial Surveillance Data**
+            - **What to Expect:** The selected dataset will be loaded and prepared for your forecast.
+
+            """)
+
+        with st.expander("**Step 2: Set Parameters and Conditions**"):
+            st.write("""
+            - **What to Do:** 
+                - Use the select boxes and sliders to choose various parameters and conditions.
+            - **What to Expect:** These selections will allow you to make the prediction.
+            """)
+
+        with st.expander("**Step 3: Make Prediction**"):
+            st.write("""
+            - **What to Do:** 
+                - Click on the `Make Prediction` button to generate the prediction based on your selections.
+            - **What to Expect:** The prediction would be made based on your selections. This might take a few seconds to minutes so just give it a little time.
+
+            """)
+
+        with st.expander("**Step 4: View Results**"):
+            st.write("""
+            - **Output:**
+                - There would be a display message indicating whether the selected organism (bacteria) is:
+                    - **Resistant**
+                    - **Intermediate**
+                    - **Susceptible**
+                - to the selected antibiotic under the chosen conditions.
+            """)
+
+        st.write("Note: Feel free to revisit this guide if you need assistance.")
+        st.info("Happy making your predictions!")
     
-    datasets = ["Gram-Negative Bactirial Surveilance Data", "Gram-Positive Bactirial Surveilance Data"]
-    st.subheader("Select oreferred dataset")
+    datasets = ["Gram-Negative Bacterial Surveilance Data", "Gram-Positive Bacterial Surveilance Data"]
+    st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets)
 
     # Gram-Negative Prediction
-    if selected_dataset == "Gram-Negative Bactirial Surveilance Data":
-        st.subheader("Select Antibiotic to forecast its resistance for")
+    if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
+        st.subheader("Select the factors below to make the prediction")
         anti = st.selectbox("Pick an Antibiotic " + picker_icon, ngram_antibiotic_list)
 
         utils.make_prediction(gram_neg, anti)
     
     # Gram-Postivie Prediction
-    if selected_dataset == "Gram-Positive Bactirial Surveilance Data":
-        st.subheader("Select Antibiotic to forecast its resistance for")
+    if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
+        st.subheader("Select the factors below to make the prediction")
         anti = st.selectbox("Pick an Antibiotic " + picker_icon, pgram_antibiotic_list)
 
         utils.make_prediction(gram_pos, anti)
 
 
 if selected == "About":
-    st.markdown("About the Team Members")
-    st.markdown("About the Competition")
-    st.markdown("About the Web App")
+    st.subheader("About the Team Members")
+    st.markdown(
+        """
+        Read more about Dr. Ken [here](https://www.example.com).
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        """
+        Read more about Dr. Aforlabi [here](https://www.example.com).
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        """
+        Read more about Dr. Anthony [here](https://www.example.com).
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        """
+        Read more about Gamah [here](https://www.example.com).
+        """,
+        unsafe_allow_html=True
+    )
+    st.subheader("About the Competition")
 
+    st.subheader("About the Datasets")
+    st.markdown("""
+    ResistAI is powered by three comprehensive datasets: Pfizer's ATLAS Program, Paratek's KEYSTONE Program, and the EARS Dataset from Kaggle. 
+    The ATLAS Program, spanning 83 countries, tracks antibiotic susceptibility, resistance trends, and emerging mechanisms, with over 917,000 antibiotic isolates and 21,000 antifungal isolates.
+    The KEYSTONE Program, covering 27 countries, focuses on omadacycline's effectiveness against challenging pathogens, with over 90,000 isolates. 
+    The EARS Dataset, sourced from European institutions, provides a diverse view of antimicrobial resistance across the continent.
 
+    These datasets are meticulously curated, updated regularly, and integrated with advanced AI to deliver unparalleled insights into AMR. 
+    ATLAS offers genotypic data and forward-looking surveillance, while KEYSTONE provides real-world clinical scenario data. 
+    EARS Dataset offers a structured and readable format, allowing users to explore resistance trends by country, gender, or age. 
+    Together, these datasets empower ResistAI users to make data-driven decisions, predict AMR dynamics, and stay informed about the latest trends in antimicrobial resistance.
+    
+    """)
+    st.markdown(
+        """
+        1. Read more about the Pfizer's ATLAS Program dataset [here](https://amr.vivli.org/members/research-programs/).
+        2. Read more about the Paratek's KEYSTONE Program dataset [here](https://amr.vivli.org/members/research-programs/).
+        3. Read more about the EARS Dataset from Kaggle [here](https://www.kaggle.com/datasets/samfenske/euro-resistance).
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.subheader("About the Web App")
+    st.markdown("""
+    ResistAI is a robust web application designed to support researchers, healthcare professionals, and data scientists in tackling antimicrobial resistance (AMR). 
+    The app provides comprehensive tools for analyzing AMR data, training predictive models, forecasting trends, and making informed predictions. 
+    With datasets like Antimicrobial Resistance in Europe Data, and Paratek-Keystone data (grouped into Gram-Negative Bacterial Surveillance Data, and Gram-Positive Bacterial Surveillance Data), users can perform detailed demographic, bacterial, and antibiotic analyses. 
+    The app's user-friendly interface offers interactive visualizations that reveal deeper insights, making data exploration intuitive and informative.
+    
+    ResistAI's machine learning capabilities enable users to train models with various algorithms, assess performance through metrics like accuracy, precision, recall, and F1-score, and download trained models for further use. 
+    The forecasting feature allows users to predict AMR trends over time, helping to anticipate and mitigate future resistance challenges. While ResistAI provides powerful predictive insights, it is important to note that these predictions should be used for study purposes only and not for clinical decision-making without consulting a domain expert. 
+    ResistAI is a valuable tool in the global effort to understand and combat AMR, providing data-driven insights that can inform research, policy, and practice.
+""")
