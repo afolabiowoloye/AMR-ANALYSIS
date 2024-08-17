@@ -107,4 +107,4 @@ This project is licensed under the MIT License as one of the licenses provided b
 
 For questions or feedback, please contact us at:
 
-- **Email:** MrAnthony@email.com
+- **Email:** anthonyimolele@gmail.com
