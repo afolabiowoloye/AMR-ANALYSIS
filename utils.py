@@ -7,6 +7,7 @@ from prophet import Prophet
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import time
 from io import BytesIO
 
 from sklearn.decomposition import PCA
@@ -58,6 +59,7 @@ def org_specimen_type(df):
     fig.update_layout(yaxis_title="Number of Organisms",
                       #height=1200,  
                     width=800)
+    fig.update_xaxes(tickangle=-90)
     return st.plotly_chart(fig)
     
 # Plot Organism Infection Types
@@ -66,6 +68,7 @@ def org_infection_type(df):
     fig.update_layout(yaxis_title="Number of Organisms",
                       #height=1200,  
                     width=800)
+    fig.update_xaxes(tickangle=-90)
     return st.plotly_chart(fig)
 
 # Plot Organism Distribution by Country
@@ -74,6 +77,7 @@ def org_by_country(df):
     fig.update_layout(yaxis_title="Number of Organisms",
                       #height=1200,  
                     width=800)
+    fig.update_xaxes(tickangle=-90)
     return st.plotly_chart(fig)
     
 # Plot Organism Resistance per Antibiotic
@@ -124,13 +128,23 @@ def continent_analysis(df):
 
     return st.plotly_chart(fig)
     
-    # Country Analysis
+# Country Analysis
 def top_10_countries(df):
     top_10_countries = df['Country'].value_counts().head(10)
 
     fig = px.bar(top_10_countries, x=top_10_countries.index, y='count', 
                     title='Top 10 Countries of the Study',
                     labels={'x': top_10_countries.index, 'count': 'Frequency'})  
+
+    return st.plotly_chart(fig)
+
+# Top 10 Organisms
+def top_10_organisms(df):
+    top_10_organisms = df['Organism'].value_counts().head(10)
+
+    fig = px.bar(top_10_organisms, x=top_10_organisms.index, y='count', 
+                    title='Top 10 Organisms in the Study',
+                    labels={'x': top_10_organisms.index, 'count': 'Frequency'})  
 
     return st.plotly_chart(fig)
     
@@ -217,52 +231,69 @@ def forecast_data(df, anti, bacteria, period):
     df['ds'] = pd.to_datetime(df['Study Year'], format='%Y') #.dt.year
     df['y'] = df[anti]
 
-    # Initialize the Prophet model
-    model = Prophet()
+    forecast_btn = st.button("Make Your Forecast")
+            
+    if forecast_btn:
+        # Initialize the progress bar
+        loading_text = st.text("Your forecast results would display soon...")
+        progress = st.progress(0)
+                
 
-    # Add regressors
-    model.add_regressor('Continent')
-    model.add_regressor('Country')
-    model.add_regressor('Nosocomial')
-    model.add_regressor('Age')
-    model.add_regressor('Gender')
-    model.add_regressor('Infection Source')
-    model.add_regressor('Infection Type')
-    model.add_regressor('Specimen Type')
+        # Artificially increment progress
+        for i in range(0, 101, 10):
+            time.sleep(0.1) 
+            progress.progress(i)
 
+        # Initialize the Prophet model
+        model = Prophet()
 
-    # Fit the model
-    model.fit(df[['ds', 'y', 'Continent', 'Country', 'Nosocomial', 'Age', 'Gender', 
-                  'Infection Source', 'Infection Type', 'Specimen Type']])
-
-    # Make future dataframe for the next 5 years
-    future = model.make_future_dataframe(periods=period, freq='YE')
-
-    
-    future['Continent'] = df['Continent'].iloc[-1]
-    future['Country'] = df['Country'].iloc[-1]
-    future['Nosocomial'] = df['Nosocomial'].iloc[-1]
-    future['Age'] = df['Age'].iloc[-1]
-    future['Gender'] = df['Gender'].iloc[-1]
-    future['Infection Source'] = df['Infection Source'].iloc[-1]
-    future['Infection Type'] = df['Infection Type'].iloc[-1]
-    future['Specimen Type'] = df['Specimen Type'].iloc[-1]
+        # Add regressors
+        model.add_regressor('Continent')
+        model.add_regressor('Country')
+        model.add_regressor('Nosocomial')
+        model.add_regressor('Age')
+        model.add_regressor('Gender')
+        model.add_regressor('Infection Source')
+        model.add_regressor('Infection Type')
+        model.add_regressor('Specimen Type')
 
 
-    # Predict future values
-    forecast = model.predict(future)
+        # Fit the model
+        model.fit(df[['ds', 'y', 'Continent', 'Country', 'Nosocomial', 'Age', 'Gender', 
+                    'Infection Source', 'Infection Type', 'Specimen Type']])
 
-    # Plot the results
-    fig = plt.figure(figsize=(10, 6))  
-    ax = fig.add_subplot(111)
-    fig = model.plot(forecast, ax=ax)
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Resistance Value")
-    ax.set_title(f"Forecast for {bacteria} with {anti}")
+        # Make future dataframe for the next 5 years
+        future = model.make_future_dataframe(periods=period, freq='YE')
+
+        
+        future['Continent'] = df['Continent'].iloc[-1]
+        future['Country'] = df['Country'].iloc[-1]
+        future['Nosocomial'] = df['Nosocomial'].iloc[-1]
+        future['Age'] = df['Age'].iloc[-1]
+        future['Gender'] = df['Gender'].iloc[-1]
+        future['Infection Source'] = df['Infection Source'].iloc[-1]
+        future['Infection Type'] = df['Infection Type'].iloc[-1]
+        future['Specimen Type'] = df['Specimen Type'].iloc[-1]
 
 
-        #fig.show()
-    return st.pyplot(fig)
+        # Predict future values
+        forecast = model.predict(future)
+
+        
+
+        # Plot the results
+        fig = plt.figure(figsize=(10, 6))  
+        ax = fig.add_subplot(111)
+        fig = model.plot(forecast, ax=ax)
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Resistance Value")
+        ax.set_title(f"Forecast for {bacteria} with {anti}")
+
+        st.pyplot(fig)
+
+        # Remove the progress bar after completion
+        progress.empty()
+        loading_text.empty()
 
 
 # User Trained Data
@@ -312,48 +343,88 @@ def model_training(model_selected, df, anti):
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    # Train the model
-    model.fit(X_train, y_train)
+    
+    train_btn = st.button("Train your model")
+    st.info("**Note**: Some algorithms might take long to train. Just give it some minutes!")
+    
+    # Get training 
+    if train_btn:
+        # Initialize the progress bar
+        loading_text = st.text("Your your model is training...")
+        progress = st.progress(0)
+        
 
-    # Make prediction
-    y_pred = model.predict(X_test)
+        # Artificially increment progress
+        for i in range(0, 101, 10):
+            time.sleep(0.1) 
+            progress.progress(i)
+        
+        # Train the model
+        model.fit(X_train, y_train)
 
-    # Calculate metrics
-    accuracy = accuracy_score(y_test, y_pred) * 100
-    precision = precision_score(y_test, y_pred, average='weighted') * 100
-    recall = recall_score(y_test, y_pred, average='weighted') * 100
-    f1 = f1_score(y_test, y_pred, average='weighted') * 100
+        # Remove the progress bar after completion
+        progress.empty()
+        loading_text.empty()
 
-    # Print metrics as percentages
-    st.write(f"Accuracy: **{accuracy:.2f}%**")
-    st.write(f"Precision: **{precision:.2f}%**")
-    st.write(f"Recall: **{recall:.2f}%**")
-    st.write(f"F1-score: **{f1:.2f}%**")
+        # Feature importance (if applicable)
+        if hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+            indices = np.argsort(importances)[::-1]
 
-    # Confusion Matrix Analysis
-    cm = confusion_matrix(y_test, y_pred)
+            # Prepare data for Plotly Express
+            importance_df = pd.DataFrame({
+                        'Feature': [X_train.columns[i] for i in indices],
+                        'Importance': importances[indices]
+                    })
 
-    # Mapping for labels
-    label_mapping = {2: 'Resistant', 1: 'Intermediate', 0: 'Susceptible'}
 
-    # Convert to DataFrame and map labels
-    cm_df = pd.DataFrame(cm)
-    cm_df.index = cm_df.index.map(label_mapping)
-    cm_df.columns = cm_df.columns.map(label_mapping)
+            st.subheader("Feature Importance Analysis")
+            # Plot using Plotly Express
+            fig = px.bar(importance_df, x='Feature', y='Importance', title='Most Important Features',
+                                labels={'Feature': 'Feature Name', 'Importance': 'Importance Value'})
+            fig.update_xaxes(tickangle=-90)
+            st.plotly_chart(fig)
 
-    # Plot confusion matrix using Plotly Express
-    fig = px.imshow(cm_df, text_auto=True, color_continuous_scale=px.colors.sequential.Plasma_r,
-                    labels={'x': 'Predicted Label', 'y': 'Actual Label', 'color': 'Count'},
-                    title='Confusion Matrix')
-    # Update layout
-    fig.update_xaxes(side="bottom")
-    fig.update_layout(
-        xaxis_title="Predicted Label",
-        yaxis_title="Actual Label",
-        title="Confusion Matrix for Classification Model"
-    )
+        # Make prediction
+        y_pred = model.predict(X_test)
 
-    st.plotly_chart(fig)
+        # Calculate metrics
+        accuracy = accuracy_score(y_test, y_pred) * 100
+        precision = precision_score(y_test, y_pred, average='weighted') * 100
+        recall = recall_score(y_test, y_pred, average='weighted') * 100
+        f1 = f1_score(y_test, y_pred, average='weighted') * 100
+
+        # Print metrics as percentages
+        st.subheader("Prediction Score")
+        st.write(f"Accuracy: **{accuracy:.2f}%**")
+        st.write(f"Precision: **{precision:.2f}%**")
+        st.write(f"Recall: **{recall:.2f}%**")
+        st.write(f"F1-score: **{f1:.2f}%**")
+
+        # Confusion Matrix Analysis
+        cm = confusion_matrix(y_test, y_pred)
+
+        # Mapping for labels
+        label_mapping = {2: 'Resistant', 1: 'Intermediate', 0: 'Susceptible'}
+
+        # Convert to DataFrame and map labels
+        cm_df = pd.DataFrame(cm)
+        cm_df.index = cm_df.index.map(label_mapping)
+        cm_df.columns = cm_df.columns.map(label_mapping)
+
+        # Plot confusion matrix using Plotly Express
+        fig = px.imshow(cm_df, text_auto=True, color_continuous_scale=px.colors.sequential.Plasma_r,
+                        labels={'x': 'Predicted Label', 'y': 'Actual Label', 'color': 'Count'},
+                        title='Confusion Matrix')
+        # Update layout
+        fig.update_xaxes(side="bottom")
+        fig.update_layout(
+            xaxis_title="Predicted Label",
+            yaxis_title="Actual Label",
+            title="Confusion Matrix for Classification Model"
+        )
+
+        st.plotly_chart(fig)
 
     # Provide download button to download the trained model
     st.subheader("Download Trained Model")
@@ -371,7 +442,7 @@ def model_training(model_selected, df, anti):
 # Make Prediction Function
 def make_prediction(df, anti):
     cols_to_use = ['Study Year', 'Organism', 'Continent', 'Country', 'Nosocomial',
-               'Age', 'Gender', 'Infection Source', 'Infection Type', 'Specimen Type']
+                   'Age', 'Gender', 'Infection Source', 'Infection Type', 'Specimen Type']
     
     anti_MIC = anti + "_MIC"
     cols_to_use.append(anti_MIC)
@@ -380,7 +451,7 @@ def make_prediction(df, anti):
     label_mapping = {'Resistant': 2, 'Intermediate': 1, 'Susceptible': 0}
     df[anti_MIC] = df[anti_MIC].map(label_mapping)
     
-    X = df.drop(anti_MIC, axis = 1)
+    X = df.drop(anti_MIC, axis=1)
     y = df[anti_MIC]
 
     # Set encoders
@@ -403,7 +474,6 @@ def make_prediction(df, anti):
     X['Infection Type'] = infection_type_encoder.fit_transform(X['Infection Type'])
     X['Specimen Type'] = specimen_encoder.fit_transform(X['Specimen Type'])
 
-    
     dec = DecisionTreeClassifier()
     dec.fit(X, y)
 
@@ -417,13 +487,12 @@ def make_prediction(df, anti):
     infection_type = df['Infection Type'].unique()
     specimen = df['Specimen Type'].unique()
 
-
-    #Selections
+    # Selections
     year = st.slider("Pick year of study:", min_value=2010, max_value=2030, value=2010, step=1)
     organisms_selected = st.selectbox("Select bacteria (organism) under study: ", organisms)
     continent_selected = st.selectbox("Select continent of study: ", continents)
     country_selected = st.selectbox("Select country of study: ", countries)
-    nosocomial_selected = st.selectbox("Select Nocosomial type: ", nosocomial)
+    nosocomial_selected = st.selectbox("Select Nosocomial type: ", nosocomial)
     age = st.slider("Pick age:", 0, 150, 1)
     gender_selected = st.selectbox("Select gender: ", gender)
     infection_source_selected = st.selectbox("Select the source of infection: ", infection_source)
@@ -431,9 +500,18 @@ def make_prediction(df, anti):
     specimen_selected = st.selectbox("Select the type of Specimen: ", specimen)
     pred_btn = st.button("Make Prediction")
 
-
-    # Get salary prediction
+    # Get prediction
     if pred_btn:
+        # Initialize the progress bar
+        loading_text = st.text("Your prediction is loading...")
+        progress = st.progress(0)
+        
+
+        # Artificially increment progress
+        for i in range(0, 101, 10):
+            time.sleep(0.1) 
+            progress.progress(i)
+
         X_test = np.array([[
             year,
             organisms_selected,
@@ -447,6 +525,7 @@ def make_prediction(df, anti):
             specimen_selected,
         ]])
 
+        # Apply encoding
         X_test[:,1] = organism_encoder.transform(X_test[:,1])
         X_test[:,2] = continent_encoder.transform(X_test[:,2])
         X_test[:,3] = country_encoder.transform(X_test[:,3])
@@ -454,17 +533,24 @@ def make_prediction(df, anti):
         X_test[:,6] = gender_encoder.transform(X_test[:,6])
         X_test[:,7] = infection_source_encoder.transform(X_test[:,7])
         X_test[:,8] = infection_type_encoder.transform(X_test[:,8])
-        X_test[:,9] = specimen_encoder.fit_transform(X_test[:,9])
-
+        X_test[:,9] = specimen_encoder.transform(X_test[:,9])
 
         X_test = X_test.astype(float)
 
-
         pred = dec.predict(X_test)
-        if pred[0] == 0:
-            st.write(f"The bacteria (organism) **{organisms_selected}** would be **Susceptible** to the antibiotic **{anti}** on the parameters selected")
-        elif pred[0] == 1:
-            st.write(f"The bacteria (organism) **{organisms_selected}** would have **Intermediate Resistance** to the antibiotic **{anti}** on the parameters selected")
-        elif pred[0] == 2:
-            (f"The bacteria (organism) **{organisms_selected}** would be **Resistant** to the antibiotic **{anti}** on the parameters selected")
 
+        # Remove the progress bar after completion
+        progress.empty()
+        loading_text.empty()
+
+        #disclaimer = st.warning("**Disclaimer:** The predictions provided by this tool are intended for study purposes only. Please consult a domain expert before making any decisions based on these predictions.")
+
+        if pred[0] == 0:
+            st.write(f"The bacteria (organism) **{organisms_selected}** would be **Susceptible** to the antibiotic **{anti}** on the conditions selected")
+            st.warning("**Disclaimer:** The predictions provided by this tool are intended for study purposes only. Please consult a domain expert before making any decisions based on these predictions.")
+        elif pred[0] == 1:
+            st.write(f"The bacteria (organism) **{organisms_selected}** would have **Intermediate Resistance** to the antibiotic **{anti}** on the conditions selected")
+            st.warning("**Disclaimer:** The predictions provided by this tool are intended for study purposes only. Please consult a domain expert before making any decisions based on these predictions.")
+        elif pred[0] == 2:
+            st.write(f"The bacteria (organism) **{organisms_selected}** would be **Resistant** to the antibiotic **{anti}** on the conditions selected")
+            st.warning("**Disclaimer:** The predictions provided by this tool are intended for study purposes only. Please consult a domain expert before making any decisions based on these predictions.")
