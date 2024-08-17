@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt # for data analysis and visualization
 import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go # for creating interactive visualizations
+import altair as alt
 #import geopandas as gpd
 
 from sklearn.decomposition import PCA
@@ -166,25 +167,37 @@ if selected == "Analysis":
             data = euro_df
             # Age analysis
             age_subset = data[data['Distribution'] == "age"]
-            age_count = age_subset['Category'].value_counts().sort_values(ascending=True)
-            st.write("**Age Group Distribution**")
-            st.bar_chart(age_count)
+            age_count = age_subset['Category'].value_counts() #.sort_values(ascending=True)
+            fig = px.bar(age_count, x=age_count.index, y='count', 
+                    title='Age Group Distribution',
+                    labels={'x': age_count.index, 'count': 'Frequency'})
+            fig.update_layout(
+                xaxis_title='Age Group',
+                yaxis_title='Frequency',  
+            )
+            st.plotly_chart(fig)
 
             # Gender analysis
             gender_subset = data[data['Distribution'] == "gender"]
             gender_count = gender_subset['Category'].value_counts().sort_values(ascending=True)
-            st.write("**Gender Distribution**")
-            st.bar_chart(gender_count)
+            fig = px.bar(gender_count, x=gender_count.index, y='count', 
+                    title='Gender Distribution',
+                    labels={'x': gender_count.index, 'count': 'Frequency'})
+            fig.update_layout(
+                xaxis_title='Gender',
+                yaxis_title='Frequency',  
+            )
+            st.plotly_chart(fig)
 
             # Country analysis
             country_count = data['RegionName'].value_counts().sort_values(ascending=False).head(10)
-            st.write("**Top 10 Countries of the Study**")
-            st.bar_chart(country_count)
-
-            # Distribution of study
-            st.write("Pie Chart of Distribution by Category")
-            gender_distribution = euro_df['Category'].value_counts()
-            fig = px.pie(names=gender_distribution.index, values=gender_distribution.values)
+            fig = px.bar(country_count, x=country_count.index, y='count', 
+                    title='Top 10 Countries of the Study',
+                    labels={'x': country_count.index, 'count': 'Frequency'})
+            fig.update_layout(
+                xaxis_title='Countries',
+                yaxis_title='Frequency',  
+            )
             st.plotly_chart(fig)
         
 
