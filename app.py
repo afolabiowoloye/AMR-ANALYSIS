@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt # for data analysis and visualization
 import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go # for creating interactive visualizations
-import altair as alt
 #import geopandas as gpd
 
 from sklearn.decomposition import PCA
@@ -39,7 +38,7 @@ picker_icon = "👇"
 #layout = "centered"
 
 #--------------------Page configuration------------------#
-st.set_page_config(page_title = page_title, page_icon = 'C:/Users/Gerald BRUNO/Documents/BioMed Project/health.png')
+st.set_page_config(page_title = page_title, page_icon = 'assets/resistAI_logo.png')
 
 #--------------------Web App Design----------------------#
 
@@ -112,7 +111,8 @@ pgram_antibiotic_list = ['Omadacycline', 'Doxycycline', 'Tetracycline',
 
 # Home page
 if selected == "Home":
-    st.subheader("Welcome to AMR Web App")
+    st.image("assets/resistAI_banner.png", use_column_width=True)
+    st.subheader("Welcome to ResistAI")
     st.write("Some dummy texts here")
 
 
@@ -922,6 +922,18 @@ if selected == "About":
         unsafe_allow_html=True
     )
     st.subheader("About the Competition")
+    st.image("assets/amr_logo.png", use_column_width=True)
+    st.markdown(
+        """
+    The 2024 Vivli AMR Surveillance Data Challenge, funded by GARDP, Paratek, Pfizer, and Vivli, is a groundbreaking initiative aimed at harnessing the power of the Vivli AMR Register to combat antimicrobial resistance (AMR). 
+    
+    This challenge seeks to drive critical research, foster collaboration and innovation, and push the boundaries of AMR research. 
+    By leveraging the Vivli AMR Register's comprehensive datasets, participants can contribute meaningfully to reshaping our understanding and approach to AMR.
+
+    Read more about the 2024 Vivli AMR Surveillance Data Challenge [here](https://amr.vivli.org/data-challenge/data-challenge-overview/).
+        """,
+        unsafe_allow_html=True
+    )
 
     st.subheader("About the Datasets")
     st.markdown("""
@@ -946,6 +958,7 @@ if selected == "About":
     )
 
     st.subheader("About the Web App")
+    st.image("assets/resistAI_about_page.png", use_column_width=True)
     st.markdown("""
     ResistAI is a robust web application designed to support researchers, healthcare professionals, and data scientists in tackling antimicrobial resistance (AMR). 
     The app provides comprehensive tools for analyzing AMR data, training predictive models, forecasting trends, and making informed predictions. 
