@@ -28,7 +28,6 @@ import numpy as np
 import pickle
 import time
 from io import BytesIO
-import zipfile36 as zipfile
 import utils
 
 
@@ -194,6 +193,8 @@ if selected == "Home":
         """
     )
 
+    st.info("Don't forget to scroll up, access each of the pages, and have fun using **ResistAI** 😊")
+
 
 
 
@@ -347,7 +348,6 @@ if selected == "Analysis":
             )
 
             st.plotly_chart(fig1)
-            st.info("Add summary analysis here!")
 
             st.subheader("Geographical Analysis")
             fig2 = px.choropleth(
