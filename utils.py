@@ -72,7 +72,7 @@ def atlas_anti_resistance_yearly(df, anti):
                     x=resistance.index, 
                     y=resistance.columns, 
                     title=f'Distribution of {anti} Resistance Over the Years',
-                    labels={'x': 'Year', 'value': 'Count'},
+                    labels={'x': 'Year', 'value': 'Frequency'},
                     color_discrete_map={'Resistant': 'red', 'Intermediate': 'orange', 'Susceptible': 'green'})
     return st.plotly_chart(fig)
 
@@ -115,7 +115,7 @@ def anti_resistance(df):
         data = pd.concat([data, counts], axis=0)
 
     fig = px.bar(data, x='Antibiotic', y='Count', color='Status', title='Antibiotic Resistance Distribution',
-                    labels={'Count': 'Value Count', 'Antibiotic': 'Antibiotic'},
+                    labels={'Count': 'Frequency', 'Antibiotic': 'Antibiotic'},
                     color_discrete_map={'Resistant': 'red', 'Intermediate': 'orange', 'Susceptible': 'green'})
 
     return st.plotly_chart(fig)
@@ -267,14 +267,14 @@ def anti_resistance_yearly(df, anti):
                     x=resistance.index, 
                     y=resistance.columns, 
                     title=f'Distribution of {anti} Resistance Over the Years',
-                    labels={'x': 'Study Year', 'value': 'Count'},
+                    labels={'x': 'Study Year', 'value': 'Frequency'},
                     color_discrete_map={'Resistant': 'red', 'Intermediate': 'orange', 'Susceptible': 'green'})
     return st.plotly_chart(fig)
     
 # Plot age distribution
 def age_distribution(df):
     fig = px.histogram(df, x="Age", title='Age Distribution')
-    fig.update_layout(yaxis_title="Count")
+    fig.update_layout(yaxis_title="Frequency")
     return st.plotly_chart(fig)
 
 # Plot Gender Distribution
@@ -282,7 +282,7 @@ def gender_distribution(df):
     fig = px.histogram(df, x="Gender", 
                    title="Distribution of Gender",
                    labels={'Gender':'Patient Gender'})
-    fig.update_layout(yaxis_title="Count")
+    fig.update_layout(yaxis_title="Frequency")
     return st.plotly_chart(fig)
 
 # Prepare data for forecasting
