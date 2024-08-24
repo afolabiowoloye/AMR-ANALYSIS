@@ -51,18 +51,6 @@ def atlas_patient_type(df):
 
     return st.plotly_chart(fig)
 
-# Atlas Antibiotic Analysis
-# Plot Chloroplet
-def atlas_anti_analysis(df, anti):
-    fig = px.choropleth(df, 
-                           locations='Country', 
-                           locationmode='country names', 
-                           color=anti, 
-                           hover_name='Country', 
-                           color_continuous_scale=px.colors.sequential.Plasma_r, 
-                           title=f'{anti} Resistance over the World')
-    return st.plotly_chart(fig)
-
 # Atlas Yearly Antibiotic Resistance
 def atlas_anti_resistance_yearly(df, anti):
 
@@ -225,28 +213,6 @@ def top_10_organisms(df, col):
 
     return st.plotly_chart(fig)
     
-# Plot Chloroplet
-def anti_per_continent(df, anti):
-    # Europe
-    fig_europe = px.choropleth(df, 
-                           locations='Country', 
-                           locationmode='country names', 
-                           color=anti, 
-                           hover_name='Country', 
-                           color_continuous_scale=px.colors.sequential.Plasma_r, 
-                           title=f'{anti} Resistance in Europe', 
-                           scope='europe')
-    # North America
-    fig_na = px.choropleth(df, 
-                           locations='Country', 
-                           locationmode='country names', 
-                           color=anti, 
-                           hover_name='Country', 
-                           color_continuous_scale=px.colors.sequential.Plasma_r, 
-                           title=f'{anti} Resistance in North America', 
-                           scope='north america')
-    return st.plotly_chart(fig_europe), st.plotly_chart(fig_na)
-
 # Yearly organism distribution
 def org_by_year(df):
     organism_distribution = df.groupby(['Study Year', 'Organism'])['Organism'].count().unstack().fillna(0)
@@ -979,4 +945,3 @@ def atlas_make_prediction(df, anti):
         elif pred[0] == 2:
             st.write(f"The bacteria (organism) **{species_selected}** would be **Resistant** to the antibiotic **{anti}** on the conditions selected")
             st.warning("**Disclaimer:** The predictions provided by this tool are intended for study purposes only. Please consult a domain expert before making any decisions based on these predictions.")
-            
