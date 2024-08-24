@@ -349,23 +349,6 @@ if selected == "Analysis":
 
             st.plotly_chart(fig1)
 
-            st.subheader("Geographical Analysis")
-            fig2 = px.choropleth(
-                euro_df,
-                locations='RegionName',
-                locationmode='country names',
-                color='Value',
-                hover_name='RegionName',
-                color_continuous_scale=px.colors.sequential.Plasma_r,
-                title='Antimicrobial Resistance in Europe',
-                scope='europe'
-            )
-
-            st.plotly_chart(fig2)
-        
-
- 
-    
     # Gram-Negative Data Analysis
     if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
 
@@ -380,7 +363,7 @@ if selected == "Analysis":
             # Gender distribution analysis
             utils.gender_distribution(gram_neg)
 
-            # Continent analys
+            # Continent analysis
             utils.continent_analysis(gram_neg)
 
             # Top 10 countries of study
@@ -427,15 +410,10 @@ if selected == "Analysis":
             anti_res = st.selectbox("Pick an Antibiotic " + picker_icon, ngram_antibiotic_list, key="yearly_antibiotic")
             utils.anti_resistance_yearly(gram_neg, anti_res)
 
-            # Continent Resistance Distribution
-            st.subheader("Select an antibiotic for continent resistance distribution")
-            anti_continent = st.selectbox("Pick an Antibiotic " + picker_icon, ngram_antibiotic_list, key="continent_antibiotic")
-            utils.anti_per_continent(gram_neg, anti_continent)
 
     # Gram-Positive Data Analysis
     if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
-
-
+        
         st.subheader("Select analysis")
         selected_analysis = st.selectbox("Pick analysis type " + picker_icon, analysis)
 
@@ -494,11 +472,6 @@ if selected == "Analysis":
             anti_res = st.selectbox("Pick an Antibiotic " + picker_icon, pgram_antibiotic_list, key="yearly_antibiotic")
             utils.anti_resistance_yearly(gram_pos, anti_res)
 
-            # Continent Resistance Distribution
-            st.subheader("Select an antibiotic for continent resistance distribution")
-            anti_continent = st.selectbox("Pick an Antibiotic " + picker_icon, pgram_antibiotic_list, key="continent_antibiotic")
-            utils.anti_per_continent(gram_pos, anti_continent)
-
     # Atlas Gram-Negative Data Analysis
     if selected_dataset == "Atlas Gram-Negative Bacteria Data":
         st.subheader("Select analysis")
@@ -552,13 +525,7 @@ if selected == "Analysis":
             #Yearly Antibiotic Resistance
             st.subheader("Select an antibiotic")
             anti = st.selectbox("Pick an Antibioticn " + picker_icon, atlas_ngram_anti_list)
-            utils.atlas_anti_resistance_yearly(atlas_gram_neg, anti)
-
-            # Atlas Chloroplet
-            st.subheader("Select an antibiotic")
-            anti = st.selectbox("Pick an Antibioticn " + picker_icon, atlas_ngram_anti_list, key="continent_antibiotic")
-            utils.atlas_anti_analysis(atlas_gram_neg, anti)
-            
+            utils.atlas_anti_resistance_yearly(atlas_gram_neg, anti)            
     
     # Atlas Gram-Positive Data Analysis
     if selected_dataset == "Atlas Gram-Positive Bacteria Data":
@@ -614,11 +581,6 @@ if selected == "Analysis":
             st.subheader("Select an antibiotic")
             anti = st.selectbox("Pick an Antibioticn " + picker_icon, atlas_pgram_anti_list)
             utils.atlas_anti_resistance_yearly(atlas_gram_pos, anti)
-
-            # Atlas Chloroplet
-            st.subheader("Select an antibiotic")
-            anti = st.selectbox("Pick an Antibioticn " + picker_icon, atlas_pgram_anti_list, key="continent_antibiotic")
-            utils.atlas_anti_analysis(atlas_gram_pos, anti)
 
 
 # Train Model Page
