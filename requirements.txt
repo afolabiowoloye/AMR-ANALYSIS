@@ -7,4 +7,5 @@ scikit-learn==1.4.2
 xgboost==2.1.1
 lightgbm==4.5.0
 catboost==1.2.5
-prophet==1.1.55
+prophet==1.1.5
+zipfile36==0.1.3
