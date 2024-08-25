@@ -1,3 +1,4 @@
+# Imports
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu # for setting up menu bar
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt # for data analysis and visualization
 import seaborn as sns
 import plotly.express as px
 from plotly import graph_objs as go # for creating interactive visualizations
-#import geopandas as gpd
+
 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -50,6 +51,7 @@ selected = option_menu(
     orientation = "horizontal"
 )
 
+# Load datasets
 @st.cache_data
 #Antimicrobial Resistance in Europe Data
 def load_euro_data():
@@ -148,7 +150,7 @@ analysis = ["Demographic Analysis", "Bacteria (Orgamism) Analysis", "Antibiotics
 # Home page
 if selected == "Home":
     st.image("assets/resistAI_banner.png", use_column_width=True)
-    st.subheader("Welcome to AMR Web App")
+    st.subheader("Welcome to ResistAI")
 
     #
     st.subheader("Objectives")
@@ -164,8 +166,8 @@ if selected == "Home":
     st.markdown(
         """
     To achieve the overaching aim for the app and provide insightful and comprehensive usage, and through the use of domain knowledge, 
-    the Pfizer's ATLAS and Paratek's KEYSTONE data provided were further grouped into Gram-Positive and Gram-Negative Bacterial data.
-    Read more about this in the document [here](doc.here)
+    the Pfizer's ATLAS and Paratek's KEYSTONE data provided and used in the development of this web app were further grouped into Gram-Positive and Gram-Negative Bacterial data.
+    Read more about this in the document [here](https://drive.google.com/file/d/1lu4Tv35V6bKF1agauzSgXXXYGSj8pQvr/view?usp=sharing)
         
     ResistAI utilizes a comprehensive suite of tools, including demographic, bacterial, and antibiotic analysis, to provide a detailed understanding of AMR trends. 
     The platform employs state-of-the-art machine learning algorithms to train predictive models, and time series analysis for forecasting future resistance trends. 
@@ -183,6 +185,7 @@ if selected == "Home":
     The results are presented in an easily interpretable format, allowing for quick and informed decision-making.
         """
     )
+    st.image("assets/atlas_results.png", use_column_width=True)
 
     st.subheader("Impact of the Work")
     st.markdown(
@@ -197,7 +200,7 @@ if selected == "Home":
 
 
 
-
+# Analysis Page
 if selected == "Analysis":
 
     # Analys page Instructions Sidebar
@@ -238,7 +241,7 @@ if selected == "Analysis":
     st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets)
 
-
+    # EARS Dataset Analysis
     if selected_dataset == "Antimicrobial Resistance in Europe Data":
 
         st.subheader("Select analysis")
@@ -284,18 +287,33 @@ if selected == "Analysis":
         
 
         # Bacteria Analysis
-        if selected_analysis == "Bacteria Analysis":
+        if selected_analysis == "Bacteria (Orgamism) Analysis":
 
-            st.write("**Bacteria Types Distribution**")
             bacteria_count = euro_df['Bacteria'].value_counts()
-            st.bar_chart(bacteria_count)
+            fig = px.bar(bacteria_count, x=bacteria_count.index, y='count', 
+                    title='Distribution of Bacteria',
+                    labels={'x': bacteria_count.index, 'count': 'Frequency'})
+            fig.update_layout(
+                xaxis_title='Bacteria',
+                yaxis_title='Frequency',  
+            )
+            st.plotly_chart(fig)
 
         
         # Antibiotic Analysis
         if selected_analysis == "Antibiotics Analysis":
-            st.write("**Antibiotic Distribution**")
+            
             anti_count = euro_df['Antibiotic'].value_counts()
-            st.bar_chart(anti_count)
+            fig = px.bar(anti_count, x=anti_count.index, y='count', 
+                    title='Distribution of Antibiotics',
+                    labels={'x': anti_count.index, 'count': 'Frequency'})
+            fig.update_layout(
+                xaxis_title='Antibiotics',
+                yaxis_title='Frequency',
+                height=800
+            )
+            fig.update_xaxes(tickangle=-90)
+            st.plotly_chart(fig)
 
             fig1 = px.box(
                 euro_df,
@@ -307,7 +325,7 @@ if selected == "Analysis":
             )
 
             fig1.update_layout(
-                xaxis_title='Year',
+                xaxis_title='Antibiotics',
                 yaxis_title='Resistance Percentage',
                 height=800,  
                 width=800   
@@ -315,20 +333,17 @@ if selected == "Analysis":
 
             st.plotly_chart(fig1)
 
-            st.subheader("Bacteria-Antibiotic Interaction")
-            st.write("Bacteria-Antibiotic Interaction Heatmap")
             interaction_data = euro_df.pivot_table(index='Bacteria', columns='Antibiotic', values='Value', aggfunc='mean')
 
             fig2 = px.imshow(
                 interaction_data,
                 color_continuous_scale=px.colors.sequential.Plasma_r,
-                title='Bacteria-Antibiotic Interaction Heatmap',
                 labels={'color': 'Resistance Percentage'},
                 aspect='auto'
             )
 
             fig2.update_layout(
-                title={'text': 'Bacteria-Antibiotic Interaction Heatmap', 'x': 0.5},
+                title={'text': 'Bacteria-Antibiotic Interaction Heatmap', 'x': 0.0},
                 xaxis_title='Antibiotic',
                 yaxis_title='Bacteria',
                 height=1200,  
@@ -349,7 +364,7 @@ if selected == "Analysis":
 
             st.plotly_chart(fig1)
 
-    # Gram-Negative Data Analysis
+    # Paratek's KEYSTONE Gram-Negative Data Analysis
     if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
 
         st.subheader("Select analysis")
@@ -363,7 +378,7 @@ if selected == "Analysis":
             # Gender distribution analysis
             utils.gender_distribution(gram_neg)
 
-            # Continent analysis
+            # Continent analys
             utils.continent_analysis(gram_neg)
 
             # Top 10 countries of study
@@ -411,7 +426,7 @@ if selected == "Analysis":
             utils.anti_resistance_yearly(gram_neg, anti_res)
 
 
-    # Gram-Positive Data Analysis
+    # Paratek's KEYSTONE Gram-Positive Data Analysis
     if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
         
         st.subheader("Select analysis")
@@ -667,7 +682,7 @@ if selected == "Train Model":
     st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets)
 
-
+    # EARS Dataset Training
     if selected_dataset == "Antimicrobial Resistance in Europe Data":
         # Dummy feature encoding
         data_encoded = euro_df
@@ -722,7 +737,7 @@ if selected == "Train Model":
                 progress = st.progress(0)
                 
 
-                # Artificially increment progress
+                # Increment progress
                 for i in range(0, 101, 10):
                     time.sleep(0.1) 
                     progress.progress(i)
@@ -797,7 +812,7 @@ if selected == "Train Model":
 
         model_training_and_analysis(model_selected, X_train, y_train, X_test, y_test)
     
-    # Gram-Negative Data Training
+    # Paratek's KEYSTONE Gram-Negative Data Training
     if selected_dataset == "Gram-Negative Bacterial Surveilance Data":        
         st.subheader("Select Algorithm")
         model_selected = st.selectbox("Pick an alogorithm to train on " + picker_icon, model_list)
@@ -807,7 +822,7 @@ if selected == "Train Model":
 
         utils.model_training(model_selected, gram_neg, anti)
 
-    # Gram-Positive Data Training
+    # Paratek's KEYSTONE Gram-Positive Data Training
     if selected_dataset == "Gram-Positive Bacterial Surveilance Data":        
         st.subheader("Select Algorithm")
         model_selected = st.selectbox("Pick an alogorithm to train on " + picker_icon, model_list)
@@ -839,7 +854,7 @@ if selected == "Train Model":
         #Trained Data
         utils.atlas_model_training(model_selected, atlas_gram_pos, anti, pheno = "Phenotype")
 
-
+# Make Forecast page
 if selected == "Make a Forecast":
     # Forecast page Instructions Sidebar
     with st.sidebar:
@@ -984,7 +999,7 @@ if selected == "Make a Forecast":
                 loading_text.empty()
 
 
-    # Forecast using Gram-Negative Bactirial Surveilance Data
+    # Forecast using Paratek's KEYSTONE Gram-Negative Bactirial Surveilance Data
     if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
         
         st.subheader("Select Bacteria (Organism) and a corresponding Antibiotic")
@@ -997,7 +1012,7 @@ if selected == "Make a Forecast":
 
         utils.forecast_data(gram_neg, anti, bacteria, forecast_period)
 
-    # Forecast using Gram-Positive Bactirial Surveilance Data
+    # Forecast using Paratek's KEYSTONE Gram-Positive Bactirial Surveilance Data
     if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
         
         st.subheader("Select Antibiotic to forecast its resistance for")
@@ -1039,7 +1054,7 @@ if selected == "Make a Forecast":
         
         utils.forecast_atlas(atlas_gram_pos, anti, bacteria, forecast_period, pheno="Phenotype")
 
-
+# Make Prediction page
 if selected == "Make Prediction":
 
     # Prediction page Instructions Sidebar
@@ -1085,20 +1100,20 @@ if selected == "Make Prediction":
             """)
 
         st.write("Note: Feel free to revisit this guide if you need assistance.")
-        st.info("Happy making your predictions!🕵️‍♀️🔍🤔")
+        st.info("Happy making your predictions!🕵️‍♀️🔍")
     
 
     st.subheader("Select preferred dataset")
     selected_dataset = st.selectbox("Pick a dataset " + picker_icon, datasets[-4:])
 
-    # Gram-Negative Prediction
+    # Paratek's KEYSTONE Gram-Negative Prediction
     if selected_dataset == "Gram-Negative Bacterial Surveilance Data":
         st.subheader("Select the factors below to make the prediction")
         anti = st.selectbox("Pick an Antibiotic " + picker_icon, ngram_antibiotic_list)
 
         utils.make_prediction(gram_neg, anti)
     
-    # Gram-Postivie Prediction
+    # Paratek's KEYSTONE Gram-Postivie Prediction
     if selected_dataset == "Gram-Positive Bacterial Surveilance Data":
         st.subheader("Select the factors below to make the prediction")
         anti = st.selectbox("Pick an Antibiotic " + picker_icon, pgram_antibiotic_list)
