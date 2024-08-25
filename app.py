@@ -145,7 +145,7 @@ datasets = ["Antimicrobial Resistance in Europe Data", "Gram-Negative Bacterial 
                 "Gram-Positive Bacterial Surveilance Data", "Atlas Gram-Negative Bacteria Data",
                 "Atlas Gram-Positive Bacteria Data"]
 
-analysis = ["Demographic Analysis", "Bacteria (Orgamism) Analysis", "Antibiotics Analysis"]
+analysis = ["Demographic Analysis", "Bacteria (Organism) Analysis", "Antibiotics Analysis"]
 
 # Home page
 if selected == "Home":
@@ -287,7 +287,7 @@ if selected == "Analysis":
         
 
         # Bacteria Analysis
-        if selected_analysis == "Bacteria (Orgamism) Analysis":
+        if selected_analysis == "Bacteria (Organism) Analysis":
 
             bacteria_count = euro_df['Bacteria'].value_counts()
             fig = px.bar(bacteria_count, x=bacteria_count.index, y='count', 
@@ -385,7 +385,7 @@ if selected == "Analysis":
             utils.top_10_countries(gram_neg)
 
         # Bactirial Analysis
-        if selected_analysis == "Bacteria (Orgamism) Analysis":
+        if selected_analysis == "Bacteria (Organism) Analysis":
             # Top 10 Organisms
             utils.top_10_organisms(gram_neg, "Organism")
 
@@ -447,7 +447,7 @@ if selected == "Analysis":
             utils.top_10_countries(gram_pos)
 
         # Bactirial Analysis
-        if selected_analysis == "Bacteria (Orgamism) Analysis":
+        if selected_analysis == "Bacteria (Organism) Analysis":
             # Top 10 Organisms
             utils.top_10_organisms(gram_pos, "Organism")
 
@@ -508,7 +508,7 @@ if selected == "Analysis":
             utils.atlas_patient_type(atlas_gram_neg)
         
         # Bactirial Analysis
-        if selected_analysis == "Bacteria (Orgamism) Analysis":
+        if selected_analysis == "Bacteria (Organism) Analysis":
             # Top 10 Organisms
             utils.top_10_organisms(atlas_gram_neg, "Species")
 
@@ -563,7 +563,7 @@ if selected == "Analysis":
             utils.atlas_patient_type(atlas_gram_pos)
         
         # Bactirial Analysis
-        if selected_analysis == "Bacteria (Orgamism) Analysis":
+        if selected_analysis == "Bacteria (Organism) Analysis":
             # Top 10 Organisms
             utils.top_10_organisms(atlas_gram_pos, "Species")
 
