@@ -165,11 +165,11 @@ if selected == "Home":
     st.image("assets/pipeline.jpeg", use_column_width=True)
     st.markdown(
         """
-    To achieve the overaching aim for the app and provide insightful and comprehensive usage, and through the use of domain knowledge, 
+    To achieve the overarching aim for the app and provide insightful and comprehensive usage, and through the use of domain knowledge, 
     the Pfizer's ATLAS and Paratek's KEYSTONE data provided and used in the development of this web app were further grouped into Gram-Positive and Gram-Negative Bacterial data.
     Read more about this in the document [here](https://drive.google.com/file/d/1lu4Tv35V6bKF1agauzSgXXXYGSj8pQvr/view?usp=sharing)
         
-    ResistAI utilizes a comprehensive suite of tools, including demographic, bacterial, and antibiotic analysis, to provide a detailed understanding of AMR trends. 
+    ResistAI utilizes a comprehensive suite of tools, including demographic, bacterial, and antibiotic analyses, to provide a detailed understanding of AMR trends. 
     The platform employs state-of-the-art machine learning algorithms to train predictive models, and time series analysis for forecasting future resistance trends. 
     Data is visualized through interactive charts and maps, offering users an intuitive and in-depth exploration of AMR data.
         """,
